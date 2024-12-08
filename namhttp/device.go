@@ -1,7 +1,7 @@
 package namhttp
 
 import (
-	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"strconv"
@@ -15,13 +15,19 @@ func handleDeviceIndex(logger *log.Logger, deviceStore *namsql.DeviceStore) http
 		func(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("Content-Type", "application/json")
 
-			devices, err := deviceStore.FindDevices()
+			devices, _, err := deviceStore.FindDevices(r.Context(), nam.DeviceFilter{})
 
 			if err != nil {
-				logger.Printf("handle device get all: %v", err)
+				logger.Printf("handle device index: %v", err)
 			}
 
-			json.NewEncoder(w).Encode(devices)
+			err = encode(w, http.StatusOK, devices)
+
+			if err != nil {
+				logger.Printf("handle device index: %v", err)
+				http.Error(w, err.Error(), http.StatusBadRequest)
+				return
+			}
 		})
 }
 
@@ -40,44 +46,33 @@ func handleDeviceView(logger *log.Logger, deviceStore *namsql.DeviceStore) http.
 			device, err := deviceStore.FindDeviceByID(r.Context(), id)
 
 			if err != nil {
-				logger.Printf("handle device get by id: %v", err)
+				logger.Printf("handle device view: %v", err)
 				http.Error(w, err.Error(), http.StatusBadRequest)
 				return
 			}
 
-			err = json.NewEncoder(w).Encode(device)
+			err = encode(w, http.StatusOK, device)
 
 			if err != nil {
-				logger.Printf("handle device get by id: %v", err)
+				logger.Printf("handle device view: %v", err)
 				http.Error(w, err.Error(), http.StatusBadRequest)
 				return
 			}
 		})
 }
 
-func handleDeviceMake(logger *log.Logger, deviceStore *namsql.DeviceStore) http.Handler {
+func handleDeviceCreate(logger *log.Logger, deviceStore *namsql.DeviceStore) http.Handler {
 	return http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
-			var device nam.Device
-
-			decoder := json.NewDecoder(r.Body)
-			err := decoder.Decode(&device)
+			device, problems, err := decodeValid[nam.Device](r)
 
 			if err != nil {
 				logger.Printf("handle device make: %v", err)
-				http.Error(w, err.Error(), http.StatusBadRequest)
+				http.Error(w, fmt.Sprintf("%s\n%s", err.Error(), problems.String()), http.StatusBadRequest)
 				return
 			}
 
-			deviceExists := deviceStore.DeviceExists(device.ID)
-
-			if deviceExists {
-				logger.Printf("handle device make: device already exists")
-				http.Error(w, "device already exists", http.StatusBadRequest)
-				return
-			}
-
-			err = deviceStore.MakeDevice(&device)
+			err = deviceStore.CreateDevice(r.Context(), &device)
 
 			if err != nil {
 				logger.Printf("handle device make: %v", err)
@@ -97,14 +92,7 @@ func handleDeviceDelete(logger *log.Logger, deviceStore *namsql.DeviceStore) htt
 				return
 			}
 
-			deviceExists := deviceStore.DeviceExists(id)
-
-			if !deviceExists {
-				logger.Printf("handle device delete: device does not exist")
-				return
-			}
-
-			err = deviceStore.DeleteDevice(id)
+			err = deviceStore.DeleteDevice(r.Context(), id)
 
 			if err != nil {
 				logger.Printf("handle device delete: %v", err)
@@ -124,25 +112,15 @@ func handleDeviceUpdate(logger *log.Logger, deviceStore *namsql.DeviceStore) htt
 				return
 			}
 
-			deviceExists := deviceStore.DeviceExists(id)
-
-			if !deviceExists {
-				logger.Printf("handle device delete: device does not exist")
-				return
-			}
-
-			var device nam.Device
-
-			decoder := json.NewDecoder(r.Body)
-			err = decoder.Decode(&device)
+			update, err := decode[nam.DeviceUpdate](r)
 
 			if err != nil {
-				logger.Printf("handle device make: %v", err)
+				logger.Printf("handle device update: %v", err)
 				http.Error(w, err.Error(), http.StatusBadRequest)
 				return
 			}
 
-			err = deviceStore.UpdateDevice(id, &device)
+			err = deviceStore.UpdateDevice(r.Context(), id, update)
 
 			if err != nil {
 				logger.Printf("handle device update: %v", err)
