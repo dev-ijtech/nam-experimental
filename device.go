@@ -20,66 +20,30 @@ const (
 type Device struct {
 	ID             int       `json:"id"`
 	Name           string    `json:"name"`
-	ManagementIPv4 string    `json:"managementIpv4"`
+	ManagementIPv4 string    `json:"managementIPv4"`
 	Vendor         string    `json:"vendor"`
 	Version        string    `json:"version"`
 	CreatedAt      time.Time `json:"createdAt"`
 	UpdatedAt      time.Time `json:"updatedAt"`
 }
 
-// TODO: Change the Valid function to implement the Validator interface properly
+func (d Device) Valid() ProblemSet {
+	problems := ProblemSet{}
 
-// func (d *Device) Valid() map[string]string {
-// 	problems := make(map[string]string)
-
-// 	if d.Name == "" {
-// 		problems["name"] = "device name is empty."
-// 	} else if utf8.RuneCountInString(d.Name) > MaxDeviceNameLen {
-// 		problems["name"] = fmt.Sprintf("length of device name is longer than %d characters.", MaxDeviceNameLen)
-// 	}
-
-// 	if d.ManagementIPv4 == "" {
-// 		problems["managementIpv4"] = "device management IPv4 does not exist."
-// 	} else if utf8.RuneCountInString(d.ManagementIPv4) > MaxDeviceNameLen {
-// 		problems["managementIpv4"] = "bad IPv4 address given."
-// 	}
-
-// 	if d.Vendor == "" {
-// 		problems["vendor"] = "device vendor is empty."
-// 	}
-
-// 	switch strings.ToLower(d.Vendor) {
-// 	case Cisco:
-// 	case Juniper:
-
-// 	default:
-// 		{
-// 			problems["vendor"] = fmt.Sprintf("unrecognised device vendor %s.", d.Vendor)
-// 		}
-// 	}
-
-// 	if d.Version == "" {
-// 		problems["vendor"] = "device version is empty."
-// 	}
-
-// 	return problems
-// }
-
-func (d *Device) Valid() error {
 	if d.Name == "" {
-		return fmt.Errorf("device validation: name does not exist")
+		problems.Add("Device name", "is empty")
 	} else if utf8.RuneCountInString(d.Name) > MaxDeviceNameLen {
-		return fmt.Errorf("device validation: name length is longer than %d", MaxDeviceNameLen)
+		problems.Add("Device name", fmt.Sprintf("length of device name is longer than %d characters.", MaxDeviceNameLen))
 	}
 
 	if d.ManagementIPv4 == "" {
-		return fmt.Errorf("device validation: management ipv4 does not exist")
+		problems.Add("Device management IPv4 address", "does not exist")
 	} else if utf8.RuneCountInString(d.ManagementIPv4) > MaxDeviceNameLen {
-		return fmt.Errorf("device validation: management ipv4 length is longer than %d", MaxDeviceManagementIPv4Len)
+		problems.Add("Device management IPv4 address", "is invalid")
 	}
 
 	if d.Vendor == "" {
-		return fmt.Errorf("device validation: vendor does not exist")
+		problems.Add("Device vendor", "does not exist")
 	}
 
 	switch strings.ToLower(d.Vendor) {
@@ -88,15 +52,15 @@ func (d *Device) Valid() error {
 
 	default:
 		{
-			return fmt.Errorf("device validation: unrecognised vendor %s", d.Vendor)
+			problems.Add("Device vendor", fmt.Sprintf("unrecognised device vendor %s.", d.Vendor))
 		}
 	}
 
 	if d.Version == "" {
-		return fmt.Errorf("device validation: version does not exist")
+		problems.Add("Device version", "is empty")
 	}
 
-	return nil
+	return problems
 }
 
 type DeviceStore interface {
@@ -106,4 +70,18 @@ type DeviceStore interface {
 	CreateDevice(device *Device) error
 	UpdateDevice(id int, device *Device) error
 	DeleteDevice(id int) error
+}
+
+type DeviceFilter struct {
+	ID *int `json:"id"`
+
+	Offset int `json:"offset"`
+	Limit  int `json:"limit"`
+}
+
+type DeviceUpdate struct {
+	Name           *string `json:"name"`
+	ManagementIPv4 *string `json:"managementIPv4"`
+	Vendor         *string `json:"vendor"`
+	Version        *string `json:"version"`
 }
