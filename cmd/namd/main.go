@@ -18,7 +18,7 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
-func run(ctx context.Context, stdout io.Writer, stderr io.Writer) error {
+func run(ctx context.Context, stdout io.Writer, stderr io.Writer, getenv func(string) string) error {
 	var err error
 
 	ctx, cancel := signal.NotifyContext(ctx, os.Interrupt)
@@ -36,10 +36,16 @@ func run(ctx context.Context, stdout io.Writer, stderr io.Writer) error {
 
 	deviceStore := namsql.NewDeviceService(db)
 
+	serverPort := getenv("PORT")
+
+	if serverPort == "" {
+		serverPort = "8080"
+	}
+
 	srv := namhttp.NewServer(logger, deviceStore)
 
 	httpServer := http.Server{
-		Addr:    ":8080",
+		Addr:    serverPort,
 		Handler: srv,
 	}
 
@@ -72,8 +78,10 @@ func run(ctx context.Context, stdout io.Writer, stderr io.Writer) error {
 
 func main() {
 	ctx := context.Background()
-	if err := run(ctx, os.Stdout, os.Stderr); err != nil {
+	if err := run(ctx, os.Stdout, os.Stderr, os.Getenv); err != nil {
 		fmt.Fprintf(os.Stderr, "%s\n", err)
 		os.Exit(1)
 	}
+
+	fmt.Println("server successfully shutdown")
 }
