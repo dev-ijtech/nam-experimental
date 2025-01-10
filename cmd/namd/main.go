@@ -14,6 +14,7 @@ import (
 
 	"github.com/dev-ijtech/nam-experimental/namhttp"
 	"github.com/dev-ijtech/nam-experimental/namsql"
+	"github.com/dev-ijtech/nam-experimental/southbound"
 
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -34,6 +35,7 @@ func run(ctx context.Context, stdout io.Writer, stderr io.Writer, getenv func(st
 
 	defer db.Close()
 
+	southboundServiceImpl := southbound.NewSouthboundService("root", "clab123", logger)
 	deviceStore := namsql.NewDeviceService(db)
 
 	serverPort := getenv("PORT")
@@ -42,10 +44,10 @@ func run(ctx context.Context, stdout io.Writer, stderr io.Writer, getenv func(st
 		serverPort = "8080"
 	}
 
-	srv := namhttp.NewServer(logger, deviceStore)
+	srv := namhttp.NewServer(logger, deviceStore, southboundServiceImpl)
 
 	httpServer := http.Server{
-		Addr:    serverPort,
+		Addr:    "127.0.0.1:" + serverPort,
 		Handler: srv,
 	}
 
