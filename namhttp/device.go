@@ -7,10 +7,9 @@ import (
 	"strconv"
 
 	"github.com/dev-ijtech/nam-experimental"
-	"github.com/dev-ijtech/nam-experimental/namsql"
 )
 
-func handleDeviceIndex(logger *log.Logger, deviceStore *namsql.DeviceStore) http.Handler {
+func handleDeviceIndex(logger *log.Logger, deviceStore nam.DeviceStore) http.Handler {
 	return http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("Content-Type", "application/json")
@@ -31,7 +30,7 @@ func handleDeviceIndex(logger *log.Logger, deviceStore *namsql.DeviceStore) http
 		})
 }
 
-func handleDeviceView(logger *log.Logger, deviceStore *namsql.DeviceStore) http.Handler {
+func handleDeviceView(logger *log.Logger, deviceStore nam.DeviceStore) http.Handler {
 	return http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("Content-Type", "application/json")
@@ -61,7 +60,7 @@ func handleDeviceView(logger *log.Logger, deviceStore *namsql.DeviceStore) http.
 		})
 }
 
-func handleDeviceCreate(logger *log.Logger, deviceStore *namsql.DeviceStore) http.Handler {
+func handleDeviceCreate(logger *log.Logger, deviceStore nam.DeviceStore) http.Handler {
 	return http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
 			device, problems, err := decodeValid[nam.Device](r)
@@ -82,7 +81,7 @@ func handleDeviceCreate(logger *log.Logger, deviceStore *namsql.DeviceStore) htt
 		})
 }
 
-func handleDeviceDelete(logger *log.Logger, deviceStore *namsql.DeviceStore) http.Handler {
+func handleDeviceDelete(logger *log.Logger, deviceStore nam.DeviceStore) http.Handler {
 	return http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
 			id, err := strconv.Atoi(r.PathValue("id"))
@@ -102,7 +101,7 @@ func handleDeviceDelete(logger *log.Logger, deviceStore *namsql.DeviceStore) htt
 		})
 }
 
-func handleDeviceUpdate(logger *log.Logger, deviceStore *namsql.DeviceStore) http.Handler {
+func handleDeviceUpdate(logger *log.Logger, deviceStore nam.DeviceStore) http.Handler {
 	return http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
 			id, err := strconv.Atoi(r.PathValue("id"))
@@ -120,7 +119,7 @@ func handleDeviceUpdate(logger *log.Logger, deviceStore *namsql.DeviceStore) htt
 				return
 			}
 
-			err = deviceStore.UpdateDevice(r.Context(), id, update)
+			err = deviceStore.UpdateDevice(r.Context(), id, &update)
 
 			if err != nil {
 				logger.Printf("handle device update: %v", err)

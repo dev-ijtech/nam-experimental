@@ -33,7 +33,7 @@ func (s *DeviceStore) FindDeviceByID(ctx context.Context, id int) (*nam.Device, 
 
 	defer tx.Rollback()
 
-	device, err := findDialByID(ctx, tx, id)
+	device, err := findDeviceByID(ctx, tx, id)
 
 	if err != nil {
 		return &nam.Device{}, fmt.Errorf("find device by id: %v", err)
@@ -78,7 +78,7 @@ func (s *DeviceStore) CreateDevice(ctx context.Context, d *nam.Device) error {
 	return tx.Commit()
 }
 
-func (s *DeviceStore) UpdateDevice(ctx context.Context, id int, update nam.DeviceUpdate) error {
+func (s *DeviceStore) UpdateDevice(ctx context.Context, id int, update *nam.DeviceUpdate) error {
 	tx, err := s.db.BeginTx(ctx, nil)
 
 	if err != nil {
@@ -87,7 +87,7 @@ func (s *DeviceStore) UpdateDevice(ctx context.Context, id int, update nam.Devic
 
 	defer tx.Rollback()
 
-	err = updateDevice(ctx, tx, id, update)
+	err = updateDevice(ctx, tx, id, *update)
 
 	if err != nil {
 		return fmt.Errorf("update device: %v", err)
@@ -128,7 +128,7 @@ func checkDeviceExists(ctx context.Context, tx *sql.Tx, id int) (bool, error) {
 	return n != 0, nil
 }
 
-func findDialByID(ctx context.Context, tx *sql.Tx, id int) (*nam.Device, error) {
+func findDeviceByID(ctx context.Context, tx *sql.Tx, id int) (*nam.Device, error) {
 	dials, _, err := findDevices(ctx, tx, nam.DeviceFilter{ID: &id})
 	if err != nil {
 		return nil, err

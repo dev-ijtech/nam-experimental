@@ -4,14 +4,14 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/dev-ijtech/nam-experimental/namsql"
+	"github.com/dev-ijtech/nam-experimental"
 )
 
-func NewServer(logger *log.Logger, deviceStore *namsql.DeviceStore) http.Handler {
+func NewServer(logger *log.Logger, deviceStore nam.DeviceStore, southboundService nam.SouthboundService) http.Handler {
 	var handler http.Handler
 	mux := http.NewServeMux()
 
-	addRoutes(mux, logger, deviceStore)
+	addRoutes(mux, logger, deviceStore, southboundService)
 
 	handler = mux
 

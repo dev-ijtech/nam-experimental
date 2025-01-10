@@ -1,6 +1,7 @@
 package nam
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"time"
@@ -64,12 +65,19 @@ func (d Device) Valid() ProblemSet {
 }
 
 type DeviceStore interface {
-	DeviceExists(id int) bool
-	FindDeviceByID(id int) (*Device, error)
-	FindDevices() ([]*Device, int, error)
-	CreateDevice(device *Device) error
-	UpdateDevice(id int, device *Device) error
-	DeleteDevice(id int) error
+	FindDeviceByID(ctx context.Context, id int) (*Device, error)
+	FindDevices(ctx context.Context, filter DeviceFilter) ([]*Device, int, error)
+	CreateDevice(ctx context.Context, device *Device) error
+	UpdateDevice(ctx context.Context, id int, device *DeviceUpdate) error
+	DeleteDevice(ctx context.Context, id int) error
+}
+
+type SouthboundService interface {
+	DeviceFactory(device *Device) (SouthboundOps, error)
+}
+
+type SouthboundOps interface {
+	GetDeviceDetails(ctx context.Context) (*Device, error)
 }
 
 type DeviceFilter struct {

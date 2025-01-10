@@ -4,7 +4,7 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/dev-ijtech/nam-experimental/namsql"
+	"github.com/dev-ijtech/nam-experimental"
 )
 
 func loggingMiddleware(logger *log.Logger, next http.Handler) http.Handler {
@@ -14,7 +14,7 @@ func loggingMiddleware(logger *log.Logger, next http.Handler) http.Handler {
 	})
 }
 
-func addRoutes(mux *http.ServeMux, logger *log.Logger, deviceStore *namsql.DeviceStore) {
+func addRoutes(mux *http.ServeMux, logger *log.Logger, deviceStore nam.DeviceStore, southboundService nam.SouthboundService) {
 	mux.Handle("GET /{$}", http.NotFoundHandler())
 
 	// Register devices handlers
@@ -24,5 +24,7 @@ func addRoutes(mux *http.ServeMux, logger *log.Logger, deviceStore *namsql.Devic
 		mux.Handle("DELETE /devices/{id}", handleDeviceDelete(logger, deviceStore))
 		mux.Handle("PATCH /devices/{id}", handleDeviceUpdate(logger, deviceStore))
 		mux.Handle("POST /devices", handleDeviceCreate(logger, deviceStore))
+		mux.Handle("POST /devices/sync", syncAllDevices(logger, deviceStore, southboundService))
+		mux.Handle("POST /devices/{id}/sync", syncDevice(logger, deviceStore, southboundService))
 	}
 }
