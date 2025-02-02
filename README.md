@@ -1,5 +1,6 @@
 # Network Automation Manager
 
+Network automation tool used to audit and configure devices.
 
 ## Credits
 
