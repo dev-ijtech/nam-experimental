@@ -16,7 +16,7 @@ import (
 	"github.com/dev-ijtech/nam-experimental/namsql"
 	"github.com/dev-ijtech/nam-experimental/southbound"
 
-	_ "github.com/mattn/go-sqlite3"
+	_ "github.com/go-sql-driver/mysql"
 )
 
 func run(ctx context.Context, stdout io.Writer, stderr io.Writer, getenv func(string) string) error {
@@ -27,7 +27,8 @@ func run(ctx context.Context, stdout io.Writer, stderr io.Writer, getenv func(st
 
 	logger := log.New(stdout, "namd: ", log.LstdFlags)
 
-	db, err := sql.Open("sqlite3", "./test.db")
+	dsn := fmt.Sprintf("%s:%s@tcp(mysql:3306)/Device", getenv("DB_USERNAME"), getenv("DB_PASSWORD"))
+	db, err := sql.Open("mysql", dsn)
 
 	if err != nil {
 		return err
@@ -47,7 +48,7 @@ func run(ctx context.Context, stdout io.Writer, stderr io.Writer, getenv func(st
 	srv := namhttp.NewServer(logger, deviceStore, southboundServiceImpl)
 
 	httpServer := http.Server{
-		Addr:    "127.0.0.1:" + serverPort,
+		Addr:    "0.0.0.0:" + serverPort,
 		Handler: srv,
 	}
 
