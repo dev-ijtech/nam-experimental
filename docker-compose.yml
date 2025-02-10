@@ -1,0 +1,27 @@
+services:
+  namd:
+    build: .
+    mem_limit: 512m
+    environment:
+      - DB_USERNAME=${MYSQL_USR}
+      - DB_PASSWORD=${MYSQL_PWD}
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+  mysql:
+    image: mysql:8.0.32
+    restart: always
+    mem_limit: 512m
+    ports:
+      - "3306:3306"
+    environment:
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PWD}
+      - MYSQL_DATABASE=Device
+      - MYSQL_USER=${MYSQL_USR}
+      - MYSQL_PASSWORD=${MYSQL_PWD}
+    healthcheck:
+      test: "/usr/bin/mysql --user=${MYSQL_USR} --password=${MYSQL_PWD} --execute \"SHOW DATABASES;\""
+      interval: 5s
+      timeout: 2s
+      retries: 60
